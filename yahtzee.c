@@ -6,7 +6,6 @@ Module: Programming Methodology
 Yahtzee Game
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -15,154 +14,83 @@ Yahtzee Game
 void rollDice(int values[]);
 void printDice(int values[]);
 void rerollDice(int values[]);
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
+void countScore(int values[], int category, int *onescore);
+void givePoints(int values[], int point_array[3][12], int category, int *onescore);
+int getSum(int values[]);
 
 int main(void)
 {
-    int values[5] = {};
+    int values[5] = {2,2,3,3,3};
     int reroll;
     int repeats = 0;
     int category = 0;
     char rollagain;
-    int count = 0;
-    int onescore;
+    int onescore = 0;
     int rep_array[2][6] = {{1, 2, 3, 4, 5, 6}, {0, 0, 0, 0, 0, 0}};
-    bool two = false;
-    bool three = false;
-    bool four = false;
-    bool largeStraight = false;
-    bool smallStraight = false;
+    int point_array[3][12] = {{1,2,3,4,5,6,7,8,9,10,11,12}, {0,0,0,0,0,0,0,25,30,40,0,50}, {0,0,0,0,0,0,0,0,0,0,0,0}};
+    bool two = false, three = false, four = false;
+    bool largeStraight = false, smallStraight = false, yahtzee = false;
 
-    srand(time(0));
+    int x=0;
+    while (x < 13){    
+        srand(time(0));
 
-    rollDice(values);
+        rollDice(values);
 
-    while (repeats < 3)
-    {
-        printf("Do you want to reroll? (y/n)\n");
-        scanf(" %c", &rollagain);
-
-        if (rollagain == 'n')
+        while (repeats < 3)
         {
-            break;
+            printf("Do you want to reroll? (y/n)\n");
+            scanf(" %c", &rollagain);
+
+            if (rollagain == 'n')
+            {
+                break;
+            }
+            else if (rollagain == 'y')
+            {
+                rerollDice(values);
+                repeats++;
+            }
+            else
+            {
+                printf("Invalid Input! Please enter 'y' or 'n'.\n");
+            }
         }
-        else if (rollagain == 'y')
+
+        printf("Final dice values: ");
+        printDice(values);
+
+        printf("Give a category: ");
+        scanf("%d", &category);
+
+        if (category > 0 && category < 7)
         {
-            rerollDice(values);
-            repeats++;
+            countScore(values, category, &onescore);
         }
         else
         {
-            printf("Invalid Input! Please enter 'y' or 'n'.\n");
+            getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee, category);
         }
-    }
 
-    printf("Final dice values: ");
-    printDice(values);
-
-    printf("Give a category (1-6 for specific score calculation): ");
-    scanf("%d", &category);
-
-
-    if (category > 0 && category < 7)
-    {
-        count = 0;
-        for (int i = 0; i < 5; i++)
+        if (point_array[2][category-1] == 0)
         {
-            if (values[i] == category)
-            {
-                count++;
-            }
+            givePoints(values, point_array, category, &onescore);
         }
-        onescore = category * count;
-        printf("The score for category %d is %d!\n", category, onescore);
-    }
-    else
-    {
-        for (int i = 0; i < 5; i++)
+        else
         {
-            count = 0;
-            for (int j = 0; j < 5; j++)
-            {
-                if (values[i] == values[j])
-                {
-                    count++;
-                }
-            }
-
-            if (i == 0 || values[i] != values[i - 1])
-            {
-                printf("The number %d appears %d times.\n", values[i], count);
-                if (values[i] >= 1 && values[i] <= 6)  
-                {
-                    rep_array[1][values[i] - 1] = count;  
-                }
-            }
+            printf("Points already given!");
         }
+        x++;
+
     }
 
-    for (int i = 0; i < 7; i++)
+    int full = 0;
+    for(int i=0; i<12; i++)
     {
-        if (rep_array[1][i] == 2)
-        {
-            two = true;
-        }
-        if (rep_array[1][i] == 3)
-        {
-            three = true;
-        }
-        if (rep_array[1][i] == 4)
-        {
-            two = false;
-            three = false;
-            four = true;
-        }
+        full += point_array[1][i];
     }
-
-    if (rep_array[1][0] == 1 && rep_array[1][1] == 1 && rep_array[1][2] == 1 &&
-        rep_array[1][3] == 1 && rep_array[1][4] == 1)
-    {
-        largeStraight = true;
-    }
-    else if (rep_array[1][1] == 1 && rep_array[1][2] == 1 && rep_array[1][3] == 1 &&
-            rep_array[1][4] == 1 && rep_array[1][5] == 1)
-    {
-        largeStraight = true;
-    }
-    else if (rep_array[1][0] >= 1 && rep_array[1][1] >= 1 && rep_array[1][2] >= 1 && rep_array[1][3] >= 1)
-    {
-        smallStraight = true;
-    }
-    else if (rep_array[1][1] >= 1 && rep_array[1][2] >= 1 && rep_array[1][3] >= 1 && rep_array[1][4] >= 1)
-    {
-        smallStraight = true;
-    }
-    else if (rep_array[1][2] >= 1 && rep_array[1][3] >= 1 && rep_array[1][4] >= 1 && rep_array[1][5] >= 1)
-    {
-        smallStraight = true;
-    }
-
-    if (three && !four && !two)
-    {
-        printf("Three of a kind.\n");
-    }
-    if (four)
-    {
-        printf("Four of a kind.\n");
-    }
-    if (two && three)
-    {
-        printf("Full house.\n");
-    }
-    if (largeStraight)
-    {
-        printf("Large Straight.\n");
-    }
-    if (smallStraight)
-    {
-        printf("Small Straight.\n");
-    }
-
-
+    printf("\npoints: %d", full);
     return 0;
 }
 
@@ -188,11 +116,11 @@ void rerollDice(int values[])
 {
     int numRerolls;
     printf("How many dice do you want to reroll (1 to 5)? ");
-    scanf("%d", numRerolls);
+    scanf("%d", &numRerolls);
 
     if (numRerolls < 1 || numRerolls > 5) {
         printf("Invalid number of rerolls. Please enter a number between 1 and 5.\n");
-        return 1;
+        return;
     }
 
     printf("Enter the dice indices you want to reroll (1-5):\n");
@@ -213,3 +141,111 @@ void rerollDice(int values[])
     printf("Updated dice values: ");
     printDice(values);
 }
+
+void countScore(int values[], int category, int *onescore)
+{
+    int count = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        if (values[i] == category)
+        {
+            count++;
+        }
+    }
+    *onescore = category * count;
+}
+
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (rep_array[1][i] == 2)
+        {
+            *two = true;
+        }
+        if (rep_array[1][i] == 3)
+        {
+            *three = true;
+        }
+        if (rep_array[1][i] == 4)
+        {
+            *four = true;
+        }
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        if (rep_array[i] && rep_array[i + 1] && rep_array[i + 2] && rep_array[i + 3])
+        {
+            *smallStraight = true;
+            if (rep_array[i + 4])
+            {
+                *largeStraight = true;
+            }
+        }
+    }
+
+    if (rep_array[5] == 5)
+    {
+        *yahtzee = true;
+    }
+
+    if ((category == 7) && three)
+    {
+        printf("Three of a kind.\n");
+    }
+    if ((category == 8) && four)
+    {
+        printf("Four of a kind.\n");
+    }
+    if ((category == 9) && (two && three))
+    {
+        printf("Full house.\n");
+    }
+    if ((category == 10) && smallStraight)
+    {
+        printf("Small Straight.\n");
+    }
+    if ((category == 11) && largeStraight)
+    {
+        printf("Large Straight.\n");
+    }
+    if (category == 12)
+    {
+        printf("Chance.\n");
+    }
+    if ((category == 13) && yahtzee)
+    {
+        printf("YAHTZEE!!");
+    }
+}
+
+void givePoints(int values[], int point_array[3][12], int category, int *onescore)
+{
+    if (category == 9 || category == 10 || category == 11 || category == 13)
+    {
+        point_array[2][category-1] = 1;
+    }
+    else if (category == 7 || category == 8 || category == 12)
+    {
+        point_array[1][category-1] = getSum(values);
+        point_array[2][category-1] = 1;
+    }
+    else
+    {
+        point_array[1][category-1] = *onescore;
+        point_array[2][category-1] = 1;
+    }
+}
+
+int getSum(int values[])
+{
+    int sum = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        sum += values[i];
+    }
+
+    return sum;
+}
+
