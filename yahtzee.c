@@ -16,8 +16,9 @@ void printDice(int values[]);
 void rerollDice(int values[]);
 void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
 void countScore(int values[], int category, int *onescore);
-void givePoints(int values[], int point_array[3][12], int category, int *onescore);
+void givePoints(int values[], bool *valid, int point_array[3][13], int category, int *onescore);
 int getSum(int values[]);
+void checkValid(int point_array[3][13], bool *valid, bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
 
 int main(void)
 {
@@ -28,9 +29,10 @@ int main(void)
     char rollagain;
     int onescore = 0;
     int rep_array[2][6] = {{1, 2, 3, 4, 5, 6}, {0, 0, 0, 0, 0, 0}};
-    int point_array[3][12] = {{1,2,3,4,5,6,7,8,9,10,11,12}, {0,0,0,0,0,0,0,25,30,40,0,50}, {0,0,0,0,0,0,0,0,0,0,0,0}};
+    int point_array[3][13] = {{1,2,3,4,5,6,7,8,9,10,11,12,13}, {0,0,0,0,0,0,0,0,25,30,40,0,50}, {0,0,0,0,0,0,0,0,0,0,0,0,0}};
     bool two = false, three = false, four = false;
     bool largeStraight = false, smallStraight = false, yahtzee = false;
+    bool valid = false;
 
     int x=0;
     while (x < 13){    
@@ -75,18 +77,45 @@ int main(void)
 
         if (point_array[2][category-1] == 0)
         {
-            givePoints(values, point_array, category, &onescore);
+            checkValid(point_array, &valid, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee, category);
+            givePoints(values, &valid, point_array, category, &onescore);
         }
         else
         {
-            printf("Points already given!");
+            printf("Points already given!\n");
         }
-        x++;
 
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[0][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[1][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[2][i]);
+        }
+        printf("\n\n");
+
+        two = false;
+        three = false;
+        four = false;
+        largeStraight = false;
+        smallStraight = false;
+        yahtzee = false;
+        valid = false;
+
+        x++;
     }
 
     int full = 0;
-    for(int i=0; i<12; i++)
+    for(int i=0; i<13; i++)
     {
         full += point_array[1][i];
     }
@@ -220,20 +249,32 @@ void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *
     }
 }
 
-void givePoints(int values[], int point_array[3][12], int category, int *onescore)
+void givePoints(int values[], bool *valid, int point_array[3][13], int category, int *onescore)
 {
-    if (category == 9 || category == 10 || category == 11 || category == 13)
+    if (valid)
     {
-        point_array[2][category-1] = 1;
-    }
-    else if (category == 7 || category == 8 || category == 12)
-    {
-        point_array[1][category-1] = getSum(values);
-        point_array[2][category-1] = 1;
+        if (category == 9 || category == 10 || category == 11 || category == 13)
+        {
+            point_array[2][category-1] = 1;
+        }
+        else if (category == 7 || category == 8 || category == 12)
+        {
+            if (valid)
+            {
+                point_array[1][category-1] = getSum(values);
+            }
+            point_array[2][category-1] = 1;
+        }
+        else
+        {
+            point_array[1][category-1] = *onescore;
+            point_array[2][category-1] = 1;
+        }
     }
     else
     {
-        point_array[1][category-1] = *onescore;
+        printf("The combination is not valid!");
+        point_array[1][category-1] = 0;
         point_array[2][category-1] = 1;
     }
 }
@@ -249,3 +290,47 @@ int getSum(int values[])
     return sum;
 }
 
+void checkValid(int point_array[3][13], bool *valid, bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category)
+{
+    {
+        switch (category)
+        {
+        case 7:
+            if (three);
+                valid = true;
+            break;
+
+        case 8:
+            if (four);
+                valid = true;
+            break;
+
+        case 9:
+            if (two && three);
+                valid = true;
+            break;
+
+        case 10:
+            if (smallStraight);
+                valid = true;
+            break;
+
+        case 11:
+            if (largeStraight);
+                valid = true;
+            break;
+
+        case 12:
+            valid = true;
+            break;
+
+        case 13:
+            if (yahtzee);
+                valid = true;
+            break;
+    
+        default:
+            break;
+        }
+    }
+}
