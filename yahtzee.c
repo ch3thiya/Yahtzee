@@ -14,12 +14,14 @@ Yahtzee Game
 void rollDice(int values[]);
 void printDice(int values[]);
 void rerollDice(int values[]);
-void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee);
 void countScore(int values[], int category, int *onescore);
 void givePoints(int values[], bool *valid, int point_array[3][13], int category, int *onescore);
 int getSum(int values[]);
 void checkValid(int point_array[3][13], bool *valid, bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
 void updateRepArray(int values[], int rep_array[2][6]);
+void printPoints(int point_array[3][13]);
+
 
 int main(void)
 {
@@ -41,7 +43,7 @@ int main(void)
     {    
         rollDice(values);
 
-        while (repeats < 3)
+        while (repeats < 2)
         {
             printf("Do you want to reroll? (y/n)\n");
             scanf(" %c", &rollagain);
@@ -82,7 +84,7 @@ int main(void)
             else
             {
                 updateRepArray(values, rep_array);
-                getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee, category);
+                getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee);
             }
 
             if (point_array[2][category - 1] != 0)
@@ -97,24 +99,7 @@ int main(void)
             }
         } while (1);
 
-
-        for (int i = 0; i < 13; i++)
-        {
-            printf("%d ", point_array[0][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++)
-        {
-            printf("%d ", point_array[1][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++)
-        {
-            printf("%d ", point_array[2][i]);
-        }
-        printf("\n\n");
+        printPoints(point_array);
 
         repeats = 0;
         x++;
@@ -190,7 +175,7 @@ void countScore(int values[], int category, int *onescore)
     *onescore = category * count;
 }
 
-void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category)
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee)
 {
     *two = *three = *four = *smallStraight = *largeStraight = *yahtzee = false;
 
@@ -211,35 +196,6 @@ void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *
                 *largeStraight = true;
             }
         }
-    }
-
-    if ((category == 7) && *three)
-    {
-        printf("Three of a kind.\n");
-    }
-    if ((category == 8) && *four)
-    {
-        printf("Four of a kind.\n");
-    }
-    if ((category == 9) && (*two && *three))
-    {
-        printf("Full house.\n");
-    }
-    if ((category == 10) && *smallStraight)
-    {
-        printf("Small Straight.\n");
-    }
-    if ((category == 11) && *largeStraight)
-    {
-        printf("Large Straight.\n");
-    }
-    if (category == 12)
-    {
-        printf("Chance.\n");
-    }
-    if ((category == 13) && *yahtzee)
-    {
-        printf("YAHTZEE!!\n");
     }
 }
 
@@ -346,4 +302,25 @@ void updateRepArray(int values[], int rep_array[2][6])
     {
         rep_array[1][values[i] - 1]++;
     }
+}
+
+void printPoints(int point_array[3][13])
+{
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[0][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[1][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[2][i]);
+        }
+        printf("\n\n");
 }
