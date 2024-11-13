@@ -6,12 +6,14 @@
 void rollDice(int values[]);
 void printDice(int values[]);
 void rerollDice(int values[]);
-void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category);
 int getSum(int values[]);
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee);
+void updateRepArray(int values[], int rep_array[2][6]);
+void printPoints(int point_array[3][13]);
 
 int main(void)
 {
-    int values[5] = {};
+    int values[5] = {1,1,1,1,3};
     int repeats = 0;
     int category = 0;
     char rollagain;
@@ -37,8 +39,6 @@ int main(void)
         printf("Final dice values: ");
         printDice(values);
 
-        getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee, category);
-
         for (int i = 1; i < 7; i++) {
             available_points = 0;
             for (int j = 0; j < 5; j++) {
@@ -46,10 +46,23 @@ int main(void)
                     available_points += i;
                 }
             }
-            available_category[1][i-1] = available_points;
+            available_category[1][i-1] = available_points; 
+            if (available_category[2][i-1] == 0) { 
+                available_category[2][i-1] = 1;
+            }
         }
 
         available_category[1][6] = available_category[1][7] = available_category[1][11] = getSum(values);
+        
+        updateRepArray(values, rep_array);
+        getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee);
+
+        if (three && available_category[2][6] == 0) available_category[2][6] = 1;
+        if (four && available_category[2][7] == 0) available_category[2][7] = 1;
+        if (two && three && available_category[2][8] == 0) available_category[2][8] = 1;  
+        if (smallStraight && available_category[2][9] == 0) available_category[2][9] = 1;
+        if (largeStraight && available_category[2][10] == 0) available_category[2][10] = 1;
+        if (yahtzee && available_category[2][12] == 0) available_category[2][12] = 1;
 
         for (int i = 0; i < 13; i++) {
             printf("%d ", available_category[0][i]);
@@ -66,29 +79,47 @@ int main(void)
         }
         printf("\n\n");
 
+        int max_points = 0;
+        int best_category = -1;
 
+        for (int i = 0; i < 13; i++) {
+            if (available_category[2][i] == 1 && available_category[1][i] > max_points) {
+                max_points = available_category[1][i];
+                best_category = i;
+            }
+        }
 
-        // for (int i = 0; i < 13; i++)
-        // {
-        //     printf("%d ", point_array[0][i]);
-        // }
-        // printf("\n");
+        if (best_category != -1) {
+            point_array[1][best_category] = max_points; 
+            available_category[2][best_category] = 2;   
+        }
+        else {
+            int random_category;
+            random_category = rand() % 13;
+            best_category = random_category;
+            available_category[2][best_category] = 2;   
+            //max_points = 0; // Assign zero points for fallback
+        }
 
-        // for (int i = 0; i < 13; i++)
-        // {
-        //     printf("%d ", point_array[1][i]);
-        // }
-        // printf("\n");
+        for (int i = 0; i < 13; i++) {
+            printf("%d ", available_category[0][i]);
+        }
+        printf("\n");
 
-        // for (int i = 0; i < 13; i++)
-        // {
-        //     printf("%d ", point_array[2][i]);
-        // }
-        // printf("\n\n");
+        for (int i = 0; i < 13; i++) {
+            printf("%d ", available_category[1][i]);
+        }
+        printf("\n");
 
-        repeats = 0;
+        for (int i = 0; i < 13; i++) {
+            printf("%d ", available_category[2][i]);
+        }
+        printf("\n\n");
+
         x++;
     }
+
+    printPoints(point_array);
 
     int full = 0;
     for(int i=0; i<13; i++)
@@ -147,7 +178,18 @@ void rerollDice(int values[])
     printDice(values);
 }
 
-void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee, int category)
+int getSum(int values[])
+{
+    int sum = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        sum += values[i];
+    }
+
+    return sum;
+}
+
+void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee)
 {
     *two = *three = *four = *smallStraight = *largeStraight = *yahtzee = false;
 
@@ -171,13 +213,36 @@ void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *
     }
 }
 
-int getSum(int values[])
+void updateRepArray(int values[], int rep_array[2][6])
 {
-    int sum = 0;
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 6; i++)
     {
-        sum += values[i];
+        rep_array[1][i] = 0;
     }
 
-    return sum;
+    for (int i = 0; i < 5; i++)
+    {
+        rep_array[1][values[i] - 1]++;
+    }
+}
+
+void printPoints(int point_array[3][13])
+{
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[0][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[1][i]);
+        }
+        printf("\n");
+
+        for (int i = 0; i < 13; i++)
+        {
+            printf("%d ", point_array[2][i]);
+        }
+        printf("\n\n");
 }

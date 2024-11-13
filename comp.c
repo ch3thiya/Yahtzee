@@ -10,6 +10,7 @@ int getSum(int values[]);
 void getPatterns(int rep_array[2][6], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee);
 void updateRepArray(int values[], int rep_array[2][6]);
 void printPoints(int point_array[3][13]);
+void compReroll(int values[], int rep_array[2][6], int available_category[3][13], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee);
 
 int main(void)
 {
@@ -40,6 +41,8 @@ int main(void)
         printf("Final dice values: ");
         printDice(values);
 
+        two = three = four = smallStraight = largeStraight = yahtzee = false;
+
         // Update upper section categories with points based on the dice values
         for (int i = 1; i <= 6; i++) {
             int available_points = 0;
@@ -49,49 +52,19 @@ int main(void)
                 }
             }
             available_category[1][i-1] = available_points;
-            if (available_category[2][i-1] == 0) { 
-                available_category[2][i-1] = 1;  // Mark as available
+            if (available_category[2][i-1] == 0)
+            { 
+                available_category[2][i-1] = 1;
+            }  
+        }
+
+        compReroll(values, rep_array, available_category, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee);
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 13; j++) {
+                printf("%d ", available_category[i][j]);
             }
-        }
-
-        // Update lower section categories based on dice patterns
-        available_category[1][6] = available_category[1][7] = available_category[1][11] = getSum(values);
-        updateRepArray(values, rep_array);
-        getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee);
-
-        hasValidPattern = three || four || (two && three) || smallStraight || largeStraight || yahtzee;
-        while (!hasValidPattern && i < 2)
-        {
-            printf("No valid pattern found; rerolling all dice.\n");
-            rollDice(values);  // Reroll all dice
-            printf("Rerolled values: ");
-            printDice(values);
-            available_category[1][6] = available_category[1][7] = available_category[1][11] = getSum(values);
-            updateRepArray(values, rep_array);
-            getPatterns(rep_array, &two, &three, &four, &smallStraight, &largeStraight, &yahtzee);
-            i++;
-        }
-
-        // Set lower section category availability
-        if (three && available_category[2][6] == 0) available_category[2][6] = 1;
-        if (four && available_category[2][7] == 0) available_category[2][7] = 1;
-        if (two && three && available_category[2][8] == 0) available_category[2][8] = 1;
-        if (smallStraight && available_category[2][9] == 0) available_category[2][9] = 1;
-        if (largeStraight && available_category[2][10] == 0) available_category[2][10] = 1;
-        if (yahtzee && available_category[2][12] == 0) available_category[2][12] = 1;
-
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[0][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[1][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[2][i]);
+            printf("\n");
         }
         printf("\n\n");
 
@@ -120,20 +93,8 @@ int main(void)
         available_category[2][best_category] = 2;  // Mark as used
         available_category[1][best_category] = 0;  // Reset points to prevent reuse
 
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[0][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[1][i]);
-        }
-        printf("\n");
-
-        for (int i = 0; i < 13; i++) {
-            printf("%d ", available_category[2][i]);
-        }
-        printf("\n\n");
+        printf("Scored %d in category %d\n", max_points, available_category[0][best_category]);
+        printPoints(point_array);
 
         printPoints(point_array);
 
@@ -265,4 +226,63 @@ void printPoints(int point_array[3][13])
             printf("%d ", point_array[2][i]);
         }
         printf("\n\n");
+}
+
+void compReroll(int values[], int rep_array[2][6], int available_category[3][13], bool *two, bool *three, bool *four, bool *smallStraight, bool *largeStraight, bool *yahtzee) {
+    int rerolls = 0;
+    bool hasValidPattern = false;
+
+    // Calculate initial patterns and update available categories
+    updateRepArray(values, rep_array);
+    getPatterns(rep_array, two, three, four, smallStraight, largeStraight, yahtzee);
+    hasValidPattern = *three || *four || (*two && *three) || *smallStraight || *largeStraight || *yahtzee;
+
+    while (!hasValidPattern && rerolls < 2) {
+        printf("No valid pattern found; selectively rerolling dice.\n");
+
+        // Selectively reroll based on current patterns
+        for (int i = 0; i < 5; i++) {
+            int diceValue = values[i];
+            bool keep = false;
+
+            // Keep dice that contribute to a possible pattern
+            if (*four || *yahtzee) {
+                // If we already have four or five of a kind, keep all dice
+                keep = true;
+            } else if (*three) {
+                // If we have three of a kind, keep dice that match the three
+                keep = (rep_array[1][diceValue - 1] >= 3);
+            } else if (*two) {
+                // If we have a pair, keep dice that match the pair
+                keep = (rep_array[1][diceValue - 1] >= 2);
+            } else if (*smallStraight || *largeStraight) {
+                // For straights, don't reroll any dice initially
+                keep = true;
+            }
+
+            // Reroll if not part of a desired pattern
+            if (!keep) {
+                values[i] = (rand() % 6) + 1;
+            }
+        }
+
+        printf("Rerolled values: ");
+        printDice(values);
+
+        // Recalculate patterns with new dice values
+        updateRepArray(values, rep_array);
+        getPatterns(rep_array, two, three, four, smallStraight, largeStraight, yahtzee);
+        hasValidPattern = *three || *four || (*two && *three) || *smallStraight || *largeStraight || *yahtzee;
+
+        rerolls++;
+    }
+
+    // Update available category points for the final roll
+    available_category[1][6] = available_category[1][7] = available_category[1][11] = getSum(values);
+    if (*three && available_category[2][6] == 0) available_category[2][6] = 1;
+    if (*four && available_category[2][7] == 0) available_category[2][7] = 1;
+    if (*two && *three && available_category[2][8] == 0) available_category[2][8] = 1;
+    if (*smallStraight && available_category[2][9] == 0) available_category[2][9] = 1;
+    if (*largeStraight && available_category[2][10] == 0) available_category[2][10] = 1;
+    if (*yahtzee && available_category[2][12] == 0) available_category[2][12] = 1;
 }
